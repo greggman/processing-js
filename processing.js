@@ -35,6 +35,18 @@
     return xhr.responseText;
   };
 
+  /* handle animation without DOSing the user's browser */
+  var requestAnimFrame = (function() {
+    return  window.requestAnimationFrame       || 
+            window.webkitRequestAnimationFrame || 
+            window.mozRequestAnimationFrame    || 
+            window.oRequestAnimationFrame      || 
+            window.msRequestAnimationFrame     || 
+            function(/* function */ callback, /* DOMElement */ element){
+              window.setTimeout(callback, 1000 / 60);
+            };
+  })();
+
   var isDOMPresent = ("document" in this) && !("fake" in this.document);
 
   /* Browsers fixes start */
@@ -7672,7 +7684,6 @@
     p.noLoop = function() {
       doLoop = false;
       loopStarted = false;
-      clearInterval(looping);
     };
 
     /**
@@ -7691,16 +7702,27 @@
       timeSinceLastFPS = new Date().getTime();
       framesSinceLastFPS = 0;
 
-      looping = window.setInterval(function() {
-        try {
-          p.redraw();
-        } catch(e_loop) {
-          window.clearInterval(looping);
-          throw e_loop;
+      var then = Date.now();
+      function loopFunction() {
+        if (doLoop) {
+          var now = Date.now();
+          var timeElapsed = now - then;
+          if (timeElapsed >= curMsPerFrame || curMsPerFrame < 33) 
+          {
+            then = now;
+            try {
+              p.redraw();
+            } catch(e_loop) {
+              throw e_loop;
+            }
+          }
+          requestAnimFrame(loopFunction, p.canvas);
         }
-      }, curMsPerFrame);
+      }
+
       doLoop = true;
       loopStarted = true;
+      loopFunction();
     };
 
     /**
@@ -7738,7 +7760,7 @@
     * @returns none
     */
     p.exit = function() {
-      window.clearInterval(looping);
+      doLoop = false;
 
       removeInstance(p.externals.canvas.id);
 
