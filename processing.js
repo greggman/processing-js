@@ -43,7 +43,7 @@
             window.oRequestAnimationFrame      || 
             window.msRequestAnimationFrame     || 
             function(/* function */ callback, /* DOMElement */ element){
-              window.setTimeout(callback, curMsPerFrame);
+              window.setTimeout(callback, 1000 / 60);
             };
   })();
 
