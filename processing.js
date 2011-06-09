@@ -7683,7 +7683,6 @@
     */
     p.noLoop = function() {
       doLoop = false;
-      loopStarted = false;
     };
 
     /**
@@ -7717,6 +7716,8 @@
             }
           }
           requestAnimFrame(loopFunction, p.canvas);
+        } else {
+          loopStarted = false;
         }
       }
 
